@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import CoinbaseLogo from "./assets/coinbaseLogoNavigation-4.svg";
+import WarningBanner from "./components/general/WarningBanner";
 
 function AuthLayout() {
   const [loading, setLoading] = useState(true);
@@ -27,9 +28,12 @@ function AuthLayout() {
   }
 
   return (
-    <main className="min-h-screen" style={{ backgroundColor: '#0a0b0d' }}>
-      <Outlet />
-    </main>
+    <>
+      <WarningBanner />
+      <main className="min-h-screen" style={{ backgroundColor: '#0a0b0d' }}>
+        <Outlet />
+      </main>
+    </>
   );
 }
 
