@@ -22,9 +22,12 @@ const SignUp = () => {
       {/* Centered form */}
       <div className="flex-1 flex items-center justify-center px-4 pb-24">
         <div className="w-full max-w-md">
-          <h1 className="text-2xl font-bold text-white text-center mb-8">
+          <h1 className="text-2xl font-bold text-white text-center mb-4">
             Create your account
           </h1>
+          <p className="text-center text-xs text-yellow-400 mb-6">
+            Demo app – do not use your real password
+          </p>
 
           <form onSubmit={handleContinue} className="flex flex-col gap-4">
             {/* Email */}
