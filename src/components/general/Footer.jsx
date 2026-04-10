@@ -89,7 +89,7 @@ const Footer = () => {
         {/* Bottom bar */}
         <div className="border-t border-gray-300 pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-            <span>© 2026 otoo's coinbase clone</span>
+            <span>© 2026 Crypto App – Student Project</span>
             <span>•</span>
             <Link to="/privacy" className="hover:text-gray-900 transition-colors">Privacy</Link>
             <span>•</span>
