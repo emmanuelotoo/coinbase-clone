@@ -4,15 +4,14 @@ import { ChevronRightIcon, StarIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import { MiniChart } from "./Charts";
 import {
-  cryptoAssets,
-  TOTAL_ASSETS,
+  cryptoAssets as staticAssets,
   formatPrice,
   getChangeColor,
   getChangeArrow,
   getChartType,
   getChartColor,
-  parseAbbreviated,
 } from "../../data/exploreData";
+import { getCryptos, mapCrypto } from "../../api";
 
 const ChevronDown = () => (
   <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -41,17 +40,27 @@ const TIME_OPTIONS = ["1H", "1D", "1W", "1M", "1Y"];
 const ASSET_OPTIONS = ["All assets", "Tradable", "Gainers", "Losers"];
 
 const CryptoMarketPrices = ({ searchQuery }) => {
+  const [cryptoAssets, setCryptoAssets] = useState(staticAssets);
   const [currentPage, setCurrentPage] = useState(1);
   const [favorites, setFavorites] = useState(new Set());
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [timePeriod, setTimePeriod] = useState("1D");
   const [assetFilter, setAssetFilter] = useState("All assets");
-  const [sortColumn, setSortColumn] = useState(null); // "name" | "price" | "change" | "mktCap" | "volume"
+  const [sortColumn, setSortColumn] = useState(null); // "name" | "price" | "change"
   const [sortDir, setSortDir] = useState("none");     // "none" | "asc" | "desc"
 
   /* Dropdown open states */
   const [openDropdown, setOpenDropdown] = useState(null); // "assets" | "time" | "rows" | null
   const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    getCryptos()
+      .then((data) => {
+        const mapped = data.map(mapCrypto);
+        if (mapped.length > 0) setCryptoAssets(mapped);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -81,7 +90,7 @@ const CryptoMarketPrices = ({ searchQuery }) => {
     /* Search filter */
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      list = list.filter((a) => a.name.toLowerCase().includes(q) || a.ticker.toLowerCase().includes(q));
+      list = list.filter((a) => a.name.toLowerCase().includes(q) || (a.ticker && a.ticker.toLowerCase().includes(q)));
     }
 
     /* Asset category filter */
@@ -97,17 +106,16 @@ const CryptoMarketPrices = ({ searchQuery }) => {
           case "name":   va = a.name.toLowerCase(); vb = b.name.toLowerCase(); return va < vb ? -dir : va > vb ? dir : 0;
           case "price":  return (a.price - b.price) * dir;
           case "change": return (a.change - b.change) * dir;
-          case "mktCap": return (parseAbbreviated(a.mktCap) - parseAbbreviated(b.mktCap)) * dir;
-          case "volume": return (parseAbbreviated(a.volume) - parseAbbreviated(b.volume)) * dir;
           default:       return 0;
         }
       });
     }
 
     return list;
-  }, [searchQuery, assetFilter, sortColumn, sortDir]);
+  }, [cryptoAssets, searchQuery, assetFilter, sortColumn, sortDir]);
 
-  const totalPages = Math.ceil(TOTAL_ASSETS / rowsPerPage);
+  const totalAssets = processedAssets.length;
+  const totalPages = Math.ceil(totalAssets / rowsPerPage);
   const paginatedAssets = processedAssets.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
@@ -176,7 +184,7 @@ const CryptoMarketPrices = ({ searchQuery }) => {
         <h2 className="text-xl md:text-2xl font-bold text-gray-900" style={{ fontFamily: "var(--font-display)" }}>
           Crypto market prices
         </h2>
-        <span className="text-sm text-gray-400">{TOTAL_ASSETS.toLocaleString()} assets</span>
+        <span className="text-sm text-gray-400">{totalAssets.toLocaleString()} assets</span>
       </div>
       <p className="text-sm text-gray-500 mb-2">
         The overall crypto market is growing this week. As of today, the total crypto market capitalization is 23.99 trillion, representing a 0.64% increase from last week.
@@ -295,16 +303,20 @@ const CryptoMarketPrices = ({ searchQuery }) => {
                   Change <SortIndicator active={sortColumn === "change"} direction={sortColumn === "change" ? sortDir : "none"} />
                 </span>
               </th>
-              <th className={thClass("mktCap")} onClick={() => handleSort("mktCap")}>
-                <span className="flex items-center gap-1">
-                  Mkt cap <SortIndicator active={sortColumn === "mktCap"} direction={sortColumn === "mktCap" ? sortDir : "none"} />
-                </span>
-              </th>
-              <th className={thClass("volume")} onClick={() => handleSort("volume")}>
-                <span className="flex items-center gap-1">
-                  Volume <SortIndicator active={sortColumn === "volume"} direction={sortColumn === "volume" ? sortDir : "none"} />
-                </span>
-              </th>
+              {cryptoAssets[0]?.mktCap && (
+                <th className={thClass("mktCap")} onClick={() => handleSort("mktCap")}>
+                  <span className="flex items-center gap-1">
+                    Mkt cap <SortIndicator active={sortColumn === "mktCap"} direction={sortColumn === "mktCap" ? sortDir : "none"} />
+                  </span>
+                </th>
+              )}
+              {cryptoAssets[0]?.volume && (
+                <th className={thClass("volume")} onClick={() => handleSort("volume")}>
+                  <span className="flex items-center gap-1">
+                    Volume <SortIndicator active={sortColumn === "volume"} direction={sortColumn === "volume" ? sortDir : "none"} />
+                  </span>
+                </th>
+              )}
               <th className="text-right py-3 text-sm font-semibold text-gray-700">Actions</th>
             </tr>
           </thead>
@@ -322,12 +334,16 @@ const CryptoMarketPrices = ({ searchQuery }) => {
                 </td>
                 <td className="py-5">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                      style={{ backgroundColor: asset.color }}
-                    >
-                      {asset.letter}
-                    </div>
+                    {asset.image ? (
+                      <img src={asset.image} alt={asset.name} className="w-8 h-8 rounded-full shrink-0" />
+                    ) : (
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                        style={{ backgroundColor: asset.color }}
+                      >
+                        {asset.letter}
+                      </div>
+                    )}
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{asset.name}</p>
                       <div className="flex items-center gap-2">
@@ -346,8 +362,8 @@ const CryptoMarketPrices = ({ searchQuery }) => {
                 <td className={`py-5 text-sm font-medium ${getChangeColor(asset.change)}`}>
                   {getChangeArrow(asset.change)} {Math.abs(asset.change).toFixed(2)}%
                 </td>
-                <td className="py-5 text-sm text-gray-900">GHS {asset.mktCap}</td>
-                <td className="py-5 text-sm text-gray-900">GHS {asset.volume}</td>
+                {asset.mktCap && <td className="py-5 text-sm text-gray-900">GHS {asset.mktCap}</td>}
+                {asset.volume && <td className="py-5 text-sm text-gray-900">GHS {asset.volume}</td>}
                 <td className="py-5 text-right">
                   <Link
                     to="/signup"
@@ -389,12 +405,16 @@ const CryptoMarketPrices = ({ searchQuery }) => {
         {paginatedAssets.map((asset) => (
           <div key={asset.ticker} className="flex items-center justify-between py-4 border-b border-gray-50">
             <div className="flex items-center gap-3">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                style={{ backgroundColor: asset.color }}
-              >
-                {asset.letter}
-              </div>
+              {asset.image ? (
+                <img src={asset.image} alt={asset.name} className="w-9 h-9 rounded-full shrink-0" />
+              ) : (
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                  style={{ backgroundColor: asset.color }}
+                >
+                  {asset.letter}
+                </div>
+              )}
               <div>
                 <p className="text-sm font-semibold text-gray-900">{asset.name}</p>
                 <div className="flex items-center gap-1">
@@ -421,7 +441,7 @@ const CryptoMarketPrices = ({ searchQuery }) => {
       {/* Pagination */}
       {renderPagination()}
       <p className="text-center text-sm text-gray-400 mt-3 mb-8">
-        {(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, TOTAL_ASSETS)} of {TOTAL_ASSETS.toLocaleString()} assets
+        {(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, totalAssets)} of {totalAssets.toLocaleString()} assets
       </p>
     </section>
   );
