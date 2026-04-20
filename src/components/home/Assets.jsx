@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { assetTabs as tabs, initialAssetData as initialData } from '../../data/homeData'
+import { getCryptos, getCryptoGainers, getCryptoNew, mapCrypto } from '../../api'
 
 const formatPrice = (price) => {
   if (price < 0.001) return price.toFixed(6)
@@ -18,9 +19,23 @@ const Assets = () => {
   useEffect(() => { dataRef.current = data }, [data])
   useEffect(() => { activeTabRef.current = activeTab }, [activeTab])
 
+  // Fetch from API, fall back to static data on error
+  useEffect(() => {
+    Promise.all([getCryptos(), getCryptoGainers(), getCryptoNew()])
+      .then(([all, gainers, newest]) => {
+        setData({
+          Tradable: all.slice(0, 6).map(mapCrypto),
+          'Top gainers': gainers.slice(0, 6).map(mapCrypto),
+          'New on Coinbase': newest.slice(0, 6).map(mapCrypto),
+        })
+      })
+      .catch(() => {}) // keep static fallback
+  }, [])
+
   useEffect(() => {
     const interval = setInterval(() => {
       const current = dataRef.current[activeTabRef.current]
+      if (!current || current.length === 0) return
       const count = Math.floor(Math.random() * 2) + 1
       const picked = new Set()
       while (picked.size < count) {
@@ -98,12 +113,16 @@ const Assets = () => {
                 className="flex items-center justify-between py-4 px-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                    style={{ backgroundColor: asset.color }}
-                  >
-                    {asset.letter}
-                  </div>
+                  {asset.image ? (
+                    <img src={asset.image} alt={asset.name} className="w-10 h-10 rounded-full flex-shrink-0" />
+                  ) : (
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                      style={{ backgroundColor: asset.color }}
+                    >
+                      {asset.letter}
+                    </div>
+                  )}
                   <span className="text-white text-xl font-semibold">{asset.name}</span>
                 </div>
 
