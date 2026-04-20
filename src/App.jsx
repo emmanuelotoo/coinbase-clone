@@ -7,6 +7,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 
 const router = createBrowserRouter([
   {
@@ -44,7 +45,9 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   );
 }
 
