@@ -1,13 +1,33 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import CoinbaseLogo from '../assets/coinbaseLogoNavigation-4.svg'
+import { login, getProfile } from '../api'
+import { useAuth } from '../context/AuthContext'
 
 const SignIn = () => {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [cookieDismissed, setCookieDismissed] = useState(false)
+  const navigate = useNavigate()
+  const { login: setUser } = useAuth()
 
-  const handleContinue = (e) => {
+  const handleContinue = async (e) => {
     e.preventDefault()
+    setError('')
+    setSubmitting(true)
+
+    try {
+      await login(email, password)
+      const profile = await getProfile()
+      setUser(profile)
+      navigate('/')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -29,6 +49,12 @@ const SignIn = () => {
             Demo app – do not use your real password
           </p>
 
+          {error && (
+            <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleContinue} className="flex flex-col gap-4">
             {/* Email */}
             <div className="flex flex-col gap-1.5">
@@ -46,12 +72,29 @@ const SignIn = () => {
               />
             </div>
 
+            {/* Password */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-white font-medium">
+                Password<span className="text-red-400">*</span>
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Your password"
+                required
+                className="w-full px-4 py-4 rounded-xl text-white placeholder-gray-500 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                style={{ backgroundColor: '#1c1d20', border: '1px solid #2e2f33' }}
+              />
+            </div>
+
             <button
               type="submit"
-              className="w-full py-4 rounded-full text-white font-bold text-sm transition-opacity hover:opacity-90"
+              disabled={submitting}
+              className="w-full py-4 rounded-full text-white font-bold text-sm transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: '#3d5af1' }}
             >
-              Continue
+              {submitting ? 'Signing in...' : 'Continue'}
             </button>
           </form>
 
