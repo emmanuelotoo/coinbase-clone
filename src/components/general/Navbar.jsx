@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import CoinbaseLogo from "../../assets/coinbaseLogoNavigation-4-better.svg";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MagnifyingGlassIcon, GlobeAltIcon, CheckIcon, Bars3Icon, XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { languages, searchTabs, searchData, navbarElements } from '../../data/navbarData';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
   const [activeMenu, setActiveMenu] = useState(null);
@@ -12,6 +13,13 @@ const Navbar = () => {
   const [searchTab, setSearchTab] = useState('Top');
   const closeTimeout = useRef(null);
   const searchInputRef = useRef(null);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   useEffect(() => {
     if (searchOpen) {
@@ -123,19 +131,35 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Sign in - hidden on mobile, visible on md+ */}
-            <Link to="/signin" className="hidden md:inline-block px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-full text-sm font-bold transition-all ml-1">
-              Sign in
-            </Link>
-            
-            {/* Sign up - visible on all sizes */}
-            <Link 
-              to="/signup" 
-              className="px-6 py-2.5 text-white rounded-full text-sm font-bold transition-all"
-              style={{ backgroundColor: 'var(--coinbase-blue)' }}
-            >
-              Sign up
-            </Link>
+            {user ? (
+              <>
+                <span className="hidden md:inline-block text-sm font-medium text-gray-700 ml-1">
+                  {user.name}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-full text-sm font-bold transition-all ml-1"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Sign in - hidden on mobile, visible on md+ */}
+                <Link to="/signin" className="hidden md:inline-block px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-full text-sm font-bold transition-all ml-1">
+                  Sign in
+                </Link>
+
+                {/* Sign up - visible on all sizes */}
+                <Link
+                  to="/signup"
+                  className="px-6 py-2.5 text-white rounded-full text-sm font-bold transition-all"
+                  style={{ backgroundColor: 'var(--coinbase-blue)' }}
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
 
             {/* Hamburger menu - visible below lg */}
             <button 
@@ -368,18 +392,27 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* Bottom: Globe + Sign in (mobile only) */}
+        {/* Bottom: Globe + Sign in/out (mobile only) */}
         <div className="px-6 pb-10 flex items-center space-x-4">
           <button className="p-3 bg-gray-200 rounded-full">
             <GlobeAltIcon className="w-5 h-5 text-gray-900" />
           </button>
-          <Link 
-            to="/signin" 
-            className="px-8 py-3 bg-gray-200 text-gray-900 rounded-full text-sm font-bold"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Sign in
-          </Link>
+          {user ? (
+            <button
+              onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+              className="px-8 py-3 bg-gray-200 text-gray-900 rounded-full text-sm font-bold"
+            >
+              Sign out
+            </button>
+          ) : (
+            <Link
+              to="/signin"
+              className="px-8 py-3 bg-gray-200 text-gray-900 rounded-full text-sm font-bold"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </>
