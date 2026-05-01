@@ -19,7 +19,8 @@ const SignIn = () => {
     setSubmitting(true)
 
     try {
-      await login(email, password)
+      const data = await login(email, password)
+      localStorage.setItem("token", data.token)
       const profile = await getProfile()
       setUser(profile)
       navigate('/')
