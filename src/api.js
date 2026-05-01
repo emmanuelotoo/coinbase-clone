@@ -1,4 +1,4 @@
-const API_BASE = "http://206.189.57.158:5000/api";
+const API_BASE = "/api";
 
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem("token");
