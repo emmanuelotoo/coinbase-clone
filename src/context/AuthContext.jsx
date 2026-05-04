@@ -18,8 +18,8 @@ export function AuthProvider({ children }) {
     setUser(userData);
   };
 
-  const logout = () => {
-    apiLogout();
+  const logout = async () => {
+    await apiLogout();
     setUser(null);
   };
 
