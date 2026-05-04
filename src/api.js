@@ -1,11 +1,10 @@
 const API_BASE = "/api";
 
 async function request(endpoint, options = {}) {
-  const token = localStorage.getItem("token");
   const res = await fetch(`${API_BASE}${endpoint}`, {
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
     ...options,
@@ -35,9 +34,8 @@ export const register = (name, email, password) =>
 
 export const getProfile = () => request("/user/profile");
 
-export const logout = () => {
-  localStorage.removeItem("token");
-};
+export const logout = () =>
+  request("/auth/logout", { method: "POST" });
 
 // Crypto
 export const getCryptos = () => request("/crypto");
