@@ -20,10 +20,9 @@ const SignIn = () => {
 
     try {
       const data = await login(email, password)
-      localStorage.setItem("token", data.token)
       const profile = await getProfile()
       setUser(profile)
-      navigate('/')
+      navigate(data.redirect || '/')
     } catch (err) {
       setError(err.message)
     } finally {
