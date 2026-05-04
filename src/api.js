@@ -1,4 +1,4 @@
-const API_BASE = "http://206.189.57.158:5000/api";
+const API_BASE = "https://api.emmanuelotoo.dev/api";
 
 async function request(endpoint, options = {}) {
   const res = await fetch(`${API_BASE}${endpoint}`, {
